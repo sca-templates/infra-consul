@@ -1,0 +1,39 @@
+# consul — HashiCorp Consul agent (service discovery + health checks)
+# Local:  make all   (or make setup && make up && make register)
+# Prod:   .env provisioned externally; make up  (see ansible/roles/consul)
+#
+# network_mode: host — the agent binds 127.0.0.1 (gossip) and 0.0.0.0 (client),
+# so the TCP checks can reach the sibling services that publish ports on the host
+# (postgres-app, redis, kafka, kafka-connect, mailhog, vault).
+name: consul
+
+volumes:
+  consul_data:
+
+services:
+
+  consul:
+    image: hashicorp/consul:1.19
+    container_name: consul
+    restart: unless-stopped
+    network_mode: host
+    env_file: .env
+    volumes:
+      - consul_data:/consul/data
+    command: >
+      consul agent
+      -server
+      -bootstrap-expect=1
+      -node=local-consul
+      -bind=127.0.0.1
+      -client=0.0.0.0
+      -datacenter=dev
+      -data-dir=/consul/data
+      -encrypt=${CONSUL_GOSSIP_KEY}
+      -ui
+    healthcheck:
+      test: ["CMD", "consul", "members"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 15s

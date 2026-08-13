@@ -6,7 +6,7 @@
 set -euo pipefail
 
 PROJECT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
-VAULT_DIR="${VAULT_DIR:-$PROJECT_DIR/../../vault}"
+VAULT_DIR="${VAULT_DIR:-$PROJECT_DIR/../vault}"
 SECRETS_DIR="$VAULT_DIR/data/secrets"
 
 VAULT_ADDR="$(grep -m1 '^VAULT_ADDR=' "$VAULT_DIR/.env" 2>/dev/null | cut -d= -f2- | tr -d '\n\r')"

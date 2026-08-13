@@ -4,7 +4,7 @@
 #
 # network_mode: host — the agent binds 127.0.0.1 (gossip) and 0.0.0.0 (client),
 # so the TCP checks can reach the sibling services that publish ports on the host
-# (postgres-app, redis, kafka, kafka-connect, mailhog, vault).
+# (postgres-app, redis, kafka, kafka-connect, vault).
 name: consul
 
 volumes:

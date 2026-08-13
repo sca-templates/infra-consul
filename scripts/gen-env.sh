@@ -5,7 +5,7 @@
 set -euo pipefail
 
 PROJECT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
-VAULT_DIR="${VAULT_DIR:-$PROJECT_DIR/../../vault}"
+VAULT_DIR="${VAULT_DIR:-$PROJECT_DIR/../vault}"
 SECRETS_DIR="$VAULT_DIR/data/secrets"
 OUT="$PROJECT_DIR/.env"
 VAULT_ENV="${VAULT_ENV:-dev}"

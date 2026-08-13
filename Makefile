@@ -6,8 +6,8 @@ SHELL := /bin/bash
 COMPOSE_FILE := docker-compose.yml
 COMPOSE_PROJECT_NAME := consul
 COMPOSE := docker compose -f $(COMPOSE_FILE) -p $(COMPOSE_PROJECT_NAME)
-# this project lives in aws/local/consul, so Vault is two levels up
-VAULT_DIR := $(shell dirname $(abspath $(lastword $(MAKEFILE_LIST))))/../../vault
+# Vault is a sibling project in this repo (aws/vault)
+VAULT_DIR := $(shell dirname $(abspath $(lastword $(MAKEFILE_LIST))))/../vault
 
 .PHONY: help
 help:

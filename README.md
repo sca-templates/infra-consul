@@ -13,15 +13,15 @@ no ACLs.
 | Consul (agent/server) | `hashicorp/consul:1.19` | `8500` API+UI, `8600` DNS, `8300` RPC, `8301` gossip |
 
 Integrates with the sibling projects:
-- **Vault** (`../../vault`) — source of `CONSUL_GOSSIP_KEY` (secret `secret/consul/dev`).
-- **postgres-app** / **redis** / **kafka** / **kafka-connect** / **mailhog** /
-  **vault** — registered services with TCP checks.
+- **Vault** (`../vault`) — source of `CONSUL_GOSSIP_KEY` (secret `secret/consul/dev`).
+- **postgres-app** / **redis** / **kafka** / **kafka-connect** / **vault** —
+  registered services with TCP checks.
 
 ## Architecture Overview
 
 ```
                         +--------------------+
-                        |    Vault Cluster   |  (../../vault, 127.0.0.1:8201)
+                        |    Vault Cluster   |  (../vault, 127.0.0.1:8201)
                         |  secret/consul/dev |
                         |  CONSUL_GOSSIP_KEY |
                         +---------+----------+
@@ -42,11 +42,11 @@ Integrates with the sibling projects:
         +----------------------------------------------------+
                 ^  register (PUT /v1/agent/service/register)
                 |  TCP checks 127.0.0.1:<port>
-        +-------+-------+-------+-------+-------+---------+
-        |       |       |       |       |       |         |
-    postgresql   redis  kafka kafka-  mailhog  vault
+        +-------+-------+-------+-------+---------+
+        |       |       |       |       |         |
+    postgresql   redis  kafka kafka-  vault
        -app               connect
-       :5432    :6379  :9092  :8083   :1025    :8201
+       :5432    :6379  :9092  :8083   :8201
 ```
 
 The container runs with `network_mode: host` and `-bind=127.0.0.1` /
@@ -57,10 +57,10 @@ the host. DNS answers point to `127.0.0.1`.
 
 ```bash
 # 1. Vault running (once per machine start)
-cd ../../vault && make up && make unseal
+cd ../vault && make up && make unseal
 
 # 2. All-in-one: Vault secrets + .env + up + register
-cd ../../local/consul && make all
+cd ../consul && make all
 
 # 3. Verify
 make validate
@@ -95,7 +95,6 @@ Every `make up`/`make register` re-registers these services (idempotent
 | `redis` | 6379 | 127.0.0.1 |
 | `kafka` | 9092 | 127.0.0.1 |
 | `kafka-connect` | 8083 | 127.0.0.1 |
-| `mailhog` | 1025 | 127.0.0.1 |
 | `vault` | 8201 | 127.0.0.1 |
 
 ## How the gossip key flows (local)
@@ -140,7 +139,7 @@ Other services/apps can resolve any registered service as
 
 | Symptom | Probable cause | Fix |
 |---|---|---|
-| `make env` / `make vault-secrets` fail | Vault is not running | `cd ../../vault && make up && make unseal` |
+| `make env` / `make vault-secrets` fail | Vault is not running | `cd ../vault && make up && make unseal` |
 | `make validate` shows `Service missing: vault` | Vault registered check is critical (Vault down) | Start Vault; the check recovers automatically |
 | Agent unhealthy (`docker ps`) | `consul members` fails right after start | Wait for `start_period` (15s); check `make logs` |
 | DNS doesn't answer | `:8600` blocked or agent not ready | `make ps`; ensure no other process binds 8600 |
@@ -162,7 +161,7 @@ Other services/apps can resolve any registered service as
 ├── scripts/
 │   ├── vault-secrets.sh        # AppRole + CONSUL_GOSSIP_KEY in Vault
 │   ├── gen-env.sh              # .env from Vault
-│   ├── register-services.sh    # register the 6 services (TCP checks)
+│   ├── register-services.sh    # register the stack services (TCP checks)
 │   ├── validate.sh             # leader, members, catalog, DNS
 │   └── dns-query.py            # stdlib DNS A lookup (no dig needed)
 └── 0.Project_info/             # commit / MR helper templates

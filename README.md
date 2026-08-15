@@ -96,6 +96,11 @@ Every `make up`/`make register` re-registers these services (idempotent
 | `kafka` | 9092 | 127.0.0.1 |
 | `kafka-connect` | 8083 | 127.0.0.1 |
 | `vault` | 8201 | 127.0.0.1 |
+| `prometheus` | 9090 | 127.0.0.1 |
+| `grafana` | 3000 | 127.0.0.1 |
+| `postgres-exporter` | 9187 | 127.0.0.1 |
+| `redis-exporter` | 9121 | 127.0.0.1 |
+| `kafka-connect-exporter` | 9309 | 127.0.0.1 |
 
 ## How the gossip key flows (local)
 

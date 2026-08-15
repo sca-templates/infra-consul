@@ -8,7 +8,7 @@ set -euo pipefail
 CONSUL_ADDR="${CONSUL_ADDR:-http://127.0.0.1:8500}"
 
 # name:port — Address is 127.0.0.1 so the checks reach host-published services.
-SERVICES="postgresql-app:5432 redis:6379 kafka:9092 kafka-connect:8083 vault:8201"
+SERVICES="postgresql-app:5432 redis:6379 kafka:9092 kafka-connect:8083 vault:8201 prometheus:9090 grafana:3000 postgres-exporter:9187 redis-exporter:9121 kafka-connect-exporter:9309"
 
 wait_for_consul() {
   echo "[consul] Waiting for leader election..."

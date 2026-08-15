@@ -21,7 +21,7 @@ NODES="$(echo "${MEMBERS}" | python3 -c 'import sys,json; print(len(json.load(sy
 [ "${NODES}" -eq 1 ] && ok "consul members reports 1 node" || fail "consul members reports ${NODES} nodes"
 
 section "Catalog services"
-EXPECTED=("postgresql-app" "redis" "kafka" "kafka-connect" "vault")
+EXPECTED=("postgresql-app" "redis" "kafka" "kafka-connect" "vault" "prometheus" "grafana" "postgres-exporter" "redis-exporter" "kafka-connect-exporter")
 CATALOG="$(curl -sf "${CONSUL_ADDR}/v1/catalog/services" 2>/dev/null || true)"
 for svc in "${EXPECTED[@]}"; do
   echo "${CATALOG}" | grep -q "\"${svc}\"" && ok "Service registered: ${svc}" || fail "Service missing: ${svc}"

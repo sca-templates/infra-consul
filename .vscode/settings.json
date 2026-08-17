@@ -1,0 +1,138 @@
+{
+  // =========================
+  // FONT
+  // =========================
+  "editor.fontFamily": "Fira Code",
+  "editor.fontLigatures": true,
+  "editor.fontSize": 14,
+
+  // =========================
+  // EDITOR
+  // =========================
+  "editor.tabSize": 2,
+  "editor.insertSpaces": true,
+  "editor.wordWrap": "off",
+  "editor.minimap.enabled": false,
+  "editor.renderWhitespace": "boundary",
+  "breadcrumbs.enabled": true,
+  "problems.showCurrentInStatus": true,
+  "files.eol": "\n",
+  "files.insertFinalNewline": true,
+  "files.trimTrailingWhitespace": true,
+  "files.autoSave": "onFocusChange",
+  "workbench.iconTheme": "material-icon-theme",
+
+  // =========================
+  // MARKDOWN
+  // =========================
+  "[markdown]": {
+    "editor.defaultFormatter": "yzhang.markdown-all-in-one",
+    "editor.formatOnSave": true,
+    "editor.formatOnPaste": true,
+    "editor.wordWrap": "on",
+    "files.trimTrailingWhitespace": false,
+    "editor.codeActionsOnSave": {
+      "source.fixAll.markdownlint": "explicit"
+    }
+  },
+  "markdown.extension.tableFormatter.enabled": true,
+  "markdown.extension.orderedList.marker": "one",
+  "markdown.extension.preview.autoShowPreviewToSide": false,
+
+  // =========================
+  // YAML
+  // =========================
+  "[yaml]": {
+    "editor.defaultFormatter": "redhat.vscode-yaml",
+    "editor.tabSize": 2,
+    "editor.formatOnSave": true
+  },
+  "yaml.format.enable": true,
+  "yaml.validate": true,
+  "yaml.schemas": {
+    "https://raw.githubusercontent.com/compose-spec/compose-spec/master/schema.json": "docker-compose.yml"
+  },
+
+  // =========================
+  // JSON / JSONC / SHELL
+  // =========================
+  "[json]": {
+    "editor.defaultFormatter": "esbenp.prettier-vscode"
+  },
+  "[jsonc]": {
+    "editor.defaultFormatter": "esbenp.prettier-vscode"
+  },
+  "[shellscript]": {
+    "editor.tabSize": 2
+  },
+
+  // =========================
+  // SPELL CHECKER
+  // =========================
+  "cSpell.language": "en",
+  "cSpell.enabled": true,
+  "cSpell.words": [
+    "sca",
+    "Consul",
+    "consul",
+    "Vault",
+    "vault",
+    "Postgres",
+    "Redis",
+    "Kafka",
+    "Grafana",
+    "Prometheus",
+    "AppRole",
+    "approles",
+    "roleid",
+    "secretid",
+    "keygen",
+    "bootstrap-expect",
+    "CONSUL_GOSSIP_KEY",
+    "CONSUL_API_PORT",
+    "CONSUL_DNS_PORT",
+    "CONSUL_DATACENTER",
+    "CONSUL_HOST",
+    "postgres-app",
+    "postgres-exporter",
+    "redis-exporter",
+    "kafka-connect",
+    "kafka-connect-exporter",
+    "datacenter",
+    "gossip",
+    "keyring",
+    "shellcheck",
+    "markdownlint",
+    "schemastore"
+  ],
+
+  // =========================
+  // EXPLORER / SEARCH
+  // =========================
+  "files.exclude": {
+    ".codegraph": true
+  },
+  "search.exclude": {
+    ".secrets": true
+  },
+  "files.watcherExclude": {
+    ".secrets": true,
+    ".git": true
+  },
+  "material-icon-theme.folders.associations": {
+    "scripts": "tools",
+    "handbook": "docs",
+    "opencode": "opencode",
+    "claude": "claude",
+    "skills": "skills"
+  },
+
+  // =========================
+  // GIT / EXPLORER
+  // =========================
+  "git.autofetch": true,
+  "git.confirmSync": false,
+  "git.enableSmartCommit": true,
+  "explorer.confirmDelete": false,
+  "explorer.confirmDragAndDrop": false
+}

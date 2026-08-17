@@ -1,0 +1,18 @@
+{
+  "recommendations": [
+    "editorconfig.editorconfig",
+    "redhat.vscode-yaml",
+    "ms-azuretools.vscode-docker",
+    "timonwong.shellcheck",
+    "foxundermoon.shell-format",
+    "ventura.prom",
+    "davidanson.vscode-markdownlint",
+    "yzhang.markdown-all-in-one",
+    "streetsidesoftware.code-spell-checker",
+    "eamodio.gitlens",
+    "mhutchie.git-graph",
+    "esbenp.prettier-vscode",
+    "pkief.material-icon-theme",
+    "usernamehw.errorlens"
+  ]
+}

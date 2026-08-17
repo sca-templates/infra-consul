@@ -1,62 +1,30 @@
-# consul — Consul agent (service discovery + health checks)
+# consul — HashiCorp Consul agent (service discovery + health checks)
 
-A single-node [HashiCorp Consul](https://www.consul.io/) agent running in Docker
-for **local development**, providing **service discovery** and **TCP health
-checks** for the sibling stack services. It mirrors production
-(`ansible/roles/consul` + `terraform/modules/consul`): same image
-(`hashicorp/consul:1.19`), single server (`-bootstrap-expect=1`), gossip key
-managed by the secrets backend (Vault locally, AWS Secrets Manager in prod),
-no ACLs.
+Single-node [HashiCorp Consul](https://www.consul.io/) agent for the local
+`aws/` monorepo, providing **service discovery** and **TCP health checks** for
+the sibling stack services. API and UI on `http://127.0.0.1:8500`, DNS on
+`127.0.0.1:8600` (**loopback only**). Image `hashicorp/consul:1.19`, single
+server (`-bootstrap-expect=1`), no ACLs, gossip key managed by Vault.
+Production reference (same image): `../ansible/roles/consul` +
+`../terraform/modules/consul`.
 
-| Service | Image | Port |
-|---|---|---|
+| Service | Image | Ports |
+| --- | --- | --- |
 | Consul (agent/server) | `hashicorp/consul:1.19` | `8500` API+UI, `8600` DNS, `8300` RPC, `8301` gossip |
 
 Integrates with the sibling projects:
-- **Vault** (`../vault`) — source of `CONSUL_GOSSIP_KEY` (secret `secret/consul/dev`).
-- **postgres-app** / **redis** / **kafka** / **kafka-connect** / **vault** —
-  registered services with TCP checks.
 
-## Architecture Overview
-
-```
-                        +--------------------+
-                        |    Vault Cluster   |  (../vault, 127.0.0.1:8201)
-                        |  secret/consul/dev |
-                        |  CONSUL_GOSSIP_KEY |
-                        +---------+----------+
-                                  |
-                         make setup (vault-secrets + env)
-                                  |
-                                  v
-                        +---------+----------+
-                        |  Makefile          |  ──>  .env (gitignored)
-                        +---------+----------+
-                                  |
-                                  | docker compose up
-                                  v
-        +----------------------------------------------------+
-        |  Consul agent  (hashicorp/consul:1.19, host net)   |
-        |  -server -bootstrap-expect=1 -datacenter=dev       |
-        |  API+UI :8500 · DNS :8600 · RPC :8300 · gossip :8301|
-        +----------------------------------------------------+
-                ^  register (PUT /v1/agent/service/register)
-                |  TCP checks 127.0.0.1:<port>
-        +-------+-------+-------+-------+---------+
-        |       |       |       |       |         |
-    postgresql   redis  kafka kafka-  vault
-       -app               connect
-       :5432    :6379  :9092  :8083   :8201
-```
-
-The container runs with `network_mode: host` and `-bind=127.0.0.1` /
-`-client=0.0.0.0`, so its TCP checks reach the services that publish ports on
-the host. DNS answers point to `127.0.0.1`.
+- **Vault** (`../vault`) — source of `CONSUL_GOSSIP_KEY` (secret
+  `secret/consul/dev`, read via the `consul` AppRole).
+- **postgres-app** (`../postgres-app`), **redis** (`../redis`),
+  **kafka** / **kafka-connect** (`../kafka`), **vault** (`../vault`),
+  **prometheus** (`../prometheus`), **grafana** (`../grafana`) — registered
+  services with TCP checks (see [Registered services](#registered-services)).
 
 ## Quick Start (local)
 
 ```bash
-# 1. Vault running (once per machine start)
+# 1. Vault running and unsealed (once)
 cd ../vault && make up && make unseal
 
 # 2. All-in-one: Vault secrets + .env + up + register
@@ -72,12 +40,12 @@ idempotent too).
 ## Commands
 
 | Command | Description |
-|---|---|
-| `make setup` | Stores `CONSUL_GOSSIP_KEY` in Vault and generates `.env` (idempotent) |
+| --- | --- |
+| `make setup` | First time: Vault AppRole + gossip key + `.env` (idempotent) |
 | `make all` | `setup` + `up` + `register` |
 | `make up` | Starts the Consul agent |
 | `make register` | Registers the stack services with TCP checks |
-| `make validate` | Checks leader, members, catalog and DNS |
+| `make validate` | Checks leader, single node, catalog and DNS |
 | `make vault-secrets` | Registers the `consul` AppRole + stores `CONSUL_GOSSIP_KEY` in Vault |
 | `make env` | Generates `.env` from Vault |
 | `make down` / `make restart` / `make stop` / `make logs` / `make ps` | Stack management |
@@ -85,13 +53,17 @@ idempotent too).
 
 ## Registered services
 
-Every `make up`/`make register` re-registers these services (idempotent
+The catalog lives in `scripts/services.txt` (`name:port` per line, `#`
+comments) — the **single source of truth** read by both
+`scripts/register-services.sh` (registration) and `scripts/validate.sh`
+(verification). Never hardcode a service list in a script. Every `make up` /
+`make register` re-registers all entries (idempotent
 `PUT /v1/agent/service/register`). Checks are TCP against `127.0.0.1:<port>`
 (`interval: 10s`, `timeout: 5s`).
 
 | Service | Port | Host |
-|---|---|---|
-| `postgresql-app` | 5432 | 127.0.0.1 |
+| --- | --- | --- |
+| `postgres-app` | 5432 | 127.0.0.1 |
 | `redis` | 6379 | 127.0.0.1 |
 | `kafka` | 9092 | 127.0.0.1 |
 | `kafka-connect` | 8083 | 127.0.0.1 |
@@ -104,15 +76,29 @@ Every `make up`/`make register` re-registers these services (idempotent
 
 ## How the gossip key flows (local)
 
-1. `scripts/vault-secrets.sh` registers the `consul` AppRole (`add-service.sh
-   consul kv-reader`) and writes `CONSUL_GOSSIP_KEY` (generated with
-   `consul keygen`) in `secret/consul/dev`.
-2. `scripts/gen-env.sh` reads it and generates `.env` (gitignored).
-3. Compose passes it to the agent via `env_file` and `-encrypt=${CONSUL_GOSSIP_KEY}`.
+1. `scripts/vault-secrets.sh` registers the `consul` AppRole in Vault (via
+   `../vault/scripts/add-service.sh`, read-only policy on
+   `secret/data/consul/*`) and saves the role_id/secret_id to `.secrets/`
+   (gitignored).
+2. It generates `CONSUL_GOSSIP_KEY` with `consul keygen` and stores it in
+   `secret/consul/dev` (`FORCE=1` rotates it).
+3. `scripts/gen-env.sh` (`make env`) reads the key via the AppRole and writes
+   `.env` (gitignored, `chmod 600`). Compose passes it through
+   `env_file: .env` and `-encrypt=${CONSUL_GOSSIP_KEY}`.
 
 The same flow in production is Ansible + AWS Secrets Manager
 (`{{ project }}/{{ environment }}/consul_gossip_key`); the image and
 `-bootstrap-expect=1` flags are identical.
+
+## Networking
+
+- The agent runs on the **host network** (`network_mode: host`) with
+  `-bind=127.0.0.1` (gossip) and `-client=0.0.0.0` (API/DNS/RPC), so its TCP
+  checks reach the sibling services that publish ports on the host.
+- API+UI bind to **loopback only** (`127.0.0.1:8500`); nothing is exposed on
+  the LAN. DNS answers point to `127.0.0.1`.
+- Any registered service resolves as `<name>.service.consul` via
+  `127.0.0.1:8600` (see Usage examples).
 
 ## Usage examples
 
@@ -127,47 +113,47 @@ curl -s http://127.0.0.1:8500/v1/status/leader
 curl -s http://127.0.0.1:8500/v1/health/service/redis
 
 # DNS — no `dig` on this host, use the stdlib helper
-python3 scripts/dns-query.py redis.service.consul        # → 127.0.0.1
-python3 scripts/dns-query.py kafka.service.consul        # → 127.0.0.1
+python3 scripts/dns-query.py redis.service.consul        # -> 127.0.0.1
+python3 scripts/dns-query.py kafka.service.consul        # -> 127.0.0.1
 
 # DNS with dig (on hosts that have it)
-dig @127.0.0.1 -p 8600 redis.service.consul +short       # → 127.0.0.1
+dig @127.0.0.1 -p 8600 redis.service.consul +short       # -> 127.0.0.1
 
 # UI
 # http://127.0.0.1:8500/ui
 ```
 
-Other services/apps can resolve any registered service as
-`<name>.service.consul` through `127.0.0.1:8600`.
-
 ## Troubleshooting
 
 | Symptom | Probable cause | Fix |
-|---|---|---|
-| `make env` / `make vault-secrets` fail | Vault is not running | `cd ../vault && make up && make unseal` |
-| `make validate` shows `Service missing: vault` | Vault registered check is critical (Vault down) | Start Vault; the check recovers automatically |
-| Agent unhealthy (`docker ps`) | `consul members` fails right after start | Wait for `start_period` (15s); check `make logs` |
+| --- | --- | --- |
+| `make env` / `make vault-secrets` fail | Vault is not running/unsealed | `cd ../vault && make up && make unseal` |
+| `make validate` shows `Service missing: <svc>` | Service not registered or its port is not published | Start the sibling stack, then `make register`; the check recovers automatically |
+| Agent unhealthy (`docker ps`) | `consul members` fails right after start | Wait for the `start_period` (15s); check `make logs` |
 | DNS doesn't answer | `:8600` blocked or agent not ready | `make ps`; ensure no other process binds 8600 |
 | `consul:1.19` pull errors | No registry access | Check internet access to Docker Hub |
 
 ## Production reference
 
-- **Ansible**: `../../ansible/roles/consul/tasks/main.yml` + `templates/docker-compose.yml.j2`
-  (gossip key from AWS Secrets Manager, same image and flags).
+- **Ansible**: `../../ansible/roles/consul/tasks/main.yml` +
+  `templates/docker-compose.yml.j2` (gossip key from AWS Secrets Manager, same
+  image and flags).
 - **Terraform**: `../../terraform/modules/consul/` (EC2 instance + security
   group for `8500`, `8600`, `8300`, `8301`).
 
 ## Structure
 
-```
-├── docker-compose.yml
-├── Makefile
-├── .env.example
+```text
+├── docker-compose.yml                  # single consul agent (host network)
+├── Makefile                            # orchestrator
+├── .env.example                        # non-secret vars and ports
 ├── scripts/
-│   ├── vault-secrets.sh        # AppRole + CONSUL_GOSSIP_KEY in Vault
-│   ├── gen-env.sh              # .env from Vault
-│   ├── register-services.sh    # register the stack services (TCP checks)
-│   ├── validate.sh             # leader, members, catalog, DNS
-│   └── dns-query.py            # stdlib DNS A lookup (no dig needed)
-└── 0.Project_info/             # commit / MR helper templates
+│   ├── services.txt                    # catalog: single source of truth
+│   ├── vault-secrets.sh                # AppRole + CONSUL_GOSSIP_KEY in Vault
+│   ├── gen-env.sh                      # .env from Vault
+│   ├── register-services.sh            # register the stack services (TCP checks)
+│   ├── validate.sh                     # leader, members, catalog, DNS
+│   └── dns-query.py                    # stdlib DNS A lookup (no dig needed)
+├── docs/                               # architecture, index
+└── .claude/skills/ + .opencode/        # agent skills and commands
 ```

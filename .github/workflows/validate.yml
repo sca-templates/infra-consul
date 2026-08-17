@@ -1,0 +1,88 @@
+# =============================================================================
+# Consul Validate Pipeline — PRs and pushes to main
+# Static validation of configs and docs without needing the running stack
+# =============================================================================
+
+name: Validate
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  config:
+    name: Config
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Lint shell scripts
+        uses: ludeeus/action-shellcheck@master
+        with:
+          scandir: "./scripts"
+
+      - name: Validate docker-compose
+        run: |
+          cp .env.example .env
+          docker compose -f docker-compose.yml config --quiet
+
+      - name: Validate services.txt format
+        run: |
+          awk '/^[a-z0-9][a-z0-9-]*:[0-9]+$/ || /^#/ || /^[[:space:]]*$/ { next } { print "Invalid line: " $0; exit 1 }' scripts/services.txt
+
+      - name: Check no duplicate service names in services.txt
+        run: |
+          grep -v '^#' scripts/services.txt | cut -d: -f1 | sort | uniq -d > "$RUNNER_TEMP/dups"
+          if [ -s "$RUNNER_TEMP/dups" ]; then
+            echo "Duplicate service names:"
+            cat "$RUNNER_TEMP/dups"
+            exit 1
+          fi
+
+      - name: Check .env.example has all required keys
+        run: |
+          REQUIRED_KEYS=(
+            ENVIRONMENT
+            CONSUL_GOSSIP_KEY
+            CONSUL_HOST
+            CONSUL_API_PORT
+            CONSUL_DNS_PORT
+            CONSUL_DATACENTER
+          )
+          for key in "${REQUIRED_KEYS[@]}"; do
+            grep -q "^${key}=" .env.example \
+              && echo "[OK] ${key}" \
+              || (echo "[FAIL] Missing key: ${key}" && exit 1)
+          done
+
+  markdown:
+    name: Markdown
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+
+      - name: markdownlint
+        run: npx --yes markdownlint-cli2 README.md AGENTS.md CLAUDE.md .github/PULL_REQUEST_TEMPLATE.md .github/CONTRIBUTING.md docs/**/*.md .claude/skills/**/SKILL.md .opencode/command/*.md
+
+      - name: Check links
+        run: |
+          for f in README.md .github/PULL_REQUEST_TEMPLATE.md .github/CONTRIBUTING.md; do
+            npx --yes markdown-link-check \
+              -c .github/markdown-link-check.json \
+              "$f"
+          done

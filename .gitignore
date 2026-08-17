@@ -17,5 +17,28 @@
 # .nfs files are created when an open file is removed but is still being accessed
 .nfs*
 
-### Project info helpers (0.Project_info) ###
+### Secrets ###
+# AppRole role_id/secret_id + local tokens — never commit
+.secrets/
+
+### Obsidian ###
+# Obsidian vault configuration and internal metadata
+.obsidian/
+
+# Local cache and temporary files managed by Obsidian
+.obsidian/workspace.json
+.obsidian/workspace-mobile.json
+.obsidian/cache/
+.obsidian/workspace-old.json
+
+# Obsidian plugins and local data
+.obsidian/plugins/
+.obsidian/themes/
+.obsidian/workspace
+
+### Custom ###
+# Tooling deps and user-managed notes
 0.Project_info
+context/structure.txt
+node_modules/
+.codegraph/

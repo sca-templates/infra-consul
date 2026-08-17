@@ -1,0 +1,12 @@
+# Consul service catalog — single source of truth (name:port, TCP checks on 127.0.0.1).
+# Consumed by register-services.sh (registration) and validate.sh (verification).
+postgres-app:5432
+redis:6379
+kafka:9092
+kafka-connect:8083
+vault:8201
+prometheus:9090
+grafana:3000
+postgres-exporter:9187
+redis-exporter:9121
+kafka-connect-exporter:9309

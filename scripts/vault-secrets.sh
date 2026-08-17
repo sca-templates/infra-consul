@@ -1,13 +1,16 @@
 #!/usr/bin/env bash
 # vault-secrets.sh — Bootstraps Consul secrets in Vault (idempotent).
-#   1. Registers the "consul" AppRole (if it doesn't exist)
-#   2. Generates the gossip key (consul keygen) and stores it in secret/consul/dev
+#   1. Registers the "consul" AppRole with a read-only policy on
+#      secret/data/consul/*
+#   2. Saves the AppRole role_id/secret_id into .secrets/ (gitignored)
+#   3. Generates the gossip key (consul keygen) and stores it in secret/consul/dev
 # Usage: make vault-secrets   (FORCE=1 to rotate/overwrite)
 set -euo pipefail
 
 PROJECT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 VAULT_DIR="${VAULT_DIR:-$PROJECT_DIR/../vault}"
 SECRETS_DIR="$VAULT_DIR/data/secrets"
+SECRET_LOCAL_DIR="$PROJECT_DIR/.secrets"
 
 VAULT_ADDR="$(grep -m1 '^VAULT_ADDR=' "$VAULT_DIR/.env" 2>/dev/null | cut -d= -f2- | tr -d '\n\r')"
 VAULT_ADDR="${VAULT_ADDR:-https://127.0.0.1:8201}"
@@ -30,10 +33,11 @@ vault_get() { curl -sk -H "X-Vault-Token: $VAULT_TOKEN" "$VAULT_ADDR/v1/$1"; }
 vault_post() { curl -sk -H "X-Vault-Token: $VAULT_TOKEN" -H "Content-Type: application/json" -X POST "$VAULT_ADDR/v1/$1" -d "$2"; }
 
 echo "=== 1. AppRole 'consul' ==="
-if echo "$(vault_get "auth/approle/role/consul")" | grep -q 'does not exist'; then
+ROLE_CODE="$(curl -sk -o /dev/null -w '%{http_code}' -H "X-Vault-Token: $VAULT_TOKEN" "$VAULT_ADDR/v1/auth/approle/role/consul")"
+if [ "$ROLE_CODE" = "404" ]; then
   echo "Registering consul service in Vault..."
   if [ -x "$VAULT_DIR/scripts/add-service.sh" ]; then
-    bash "$VAULT_DIR/scripts/add-service.sh" consul kv-reader
+    bash "$VAULT_DIR/scripts/add-service.sh" consul "" --read-policy "secret/data/consul/*"
   else
     echo "ERROR: $VAULT_DIR/scripts/add-service.sh not found"
     exit 1
@@ -41,6 +45,12 @@ if echo "$(vault_get "auth/approle/role/consul")" | grep -q 'does not exist'; th
 else
   echo "AppRole consul already exists. (FORCE=1 to recreate it)"
 fi
+
+mkdir -p "$SECRET_LOCAL_DIR"
+cp "$SECRETS_DIR/approle-consul-roleid.txt" "$SECRET_LOCAL_DIR/approle-consul-roleid.txt"
+cp "$SECRETS_DIR/approle-consul-secretid.txt" "$SECRET_LOCAL_DIR/approle-consul-secretid.txt"
+chmod 0600 "$SECRET_LOCAL_DIR/approle-consul-roleid.txt" "$SECRET_LOCAL_DIR/approle-consul-secretid.txt"
+echo "AppRole credentials saved to $SECRET_LOCAL_DIR/ (gitignored)"
 
 echo ""
 echo "=== 2. CONSUL_GOSSIP_KEY in secret/consul/$VAULT_ENV ==="

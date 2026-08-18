@@ -120,4 +120,4 @@ flags in sync with production.
 ## Related
 
 - [README.md](../README.md) — commands, stack lifecycle and troubleshooting.
-- Vault note: [04-infrastructure/consul.md (sca-docs)](https://github.com/sca-node-template/sca-docs/blob/main/04-infrastructure/consul.md).
+- Vault note: [04-infrastructure/consul.md (sca-docs)](https://github.com/sca-templates/sca-docs/blob/main/04-infrastructure/consul.md).

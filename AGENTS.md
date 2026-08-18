@@ -7,22 +7,22 @@ for the local `aws/` monorepo. Follow the sibling patterns exactly (`kafka/`,
 ## Ecosystem documentation (sca-docs)
 
 The ecosystem docs live in the
-[sca-docs](https://github.com/sca-node-template/sca-docs) repository — the
+[sca-docs](https://github.com/sca-templates/sca-docs) repository — the
 single source of truth for ecosystem topology and conventions. Consult it
 before writing or editing anything about topology, ports, networks, or
 conventions. Principle: **one fact, one place** — depth lives in this repo,
 topology/maps in the vault, pointers in READMEs.
 
-- [04-infrastructure/INDEX.md](https://github.com/sca-node-template/sca-docs/blob/main/04-infrastructure/INDEX.md) — infrastructure catalog
-- [00-ecosystem/conventions.md](https://github.com/sca-node-template/sca-docs/blob/main/00-ecosystem/conventions.md) — naming, links, catalogs
-- [00-ecosystem/HOME.md](https://github.com/sca-node-template/sca-docs/blob/main/00-ecosystem/HOME.md) — vault entry point
-- [README.md](https://github.com/sca-node-template/sca-docs/blob/main/README.md) — ecosystem vision + repository map
-- [03-connections-map/connection-map.md](https://github.com/sca-node-template/sca-docs/blob/main/03-connections-map/connection-map.md) — ecosystem graph
-- [99-glossary/INDEX.md](https://github.com/sca-node-template/sca-docs/blob/main/99-glossary/INDEX.md) — ubiquitous language
-- [CONTRIBUTING.md](https://github.com/sca-node-template/sca-docs/blob/main/CONTRIBUTING.md) — vault conventions and definition of done
+- [04-infrastructure/INDEX.md](https://github.com/sca-templates/sca-docs/blob/main/04-infrastructure/INDEX.md) — infrastructure catalog
+- [00-ecosystem/conventions.md](https://github.com/sca-templates/sca-docs/blob/main/00-ecosystem/conventions.md) — naming, links, catalogs
+- [00-ecosystem/HOME.md](https://github.com/sca-templates/sca-docs/blob/main/00-ecosystem/HOME.md) — vault entry point
+- [README.md](https://github.com/sca-templates/sca-docs/blob/main/README.md) — ecosystem vision + repository map
+- [03-connections-map/connection-map.md](https://github.com/sca-templates/sca-docs/blob/main/03-connections-map/connection-map.md) — ecosystem graph
+- [99-glossary/INDEX.md](https://github.com/sca-templates/sca-docs/blob/main/99-glossary/INDEX.md) — ubiquitous language
+- [CONTRIBUTING.md](https://github.com/sca-templates/sca-docs/blob/main/CONTRIBUTING.md) — vault conventions and definition of done
 
 Fetch them via the web, the GitHub API/MCP, or the raw URLs
-(`https://raw.githubusercontent.com/sca-node-template/sca-docs/main/<path>`).
+(`https://raw.githubusercontent.com/sca-templates/sca-docs/main/<path>`).
 Do not rely on a local checkout of `sca-docs`.
 
 Keep the vault in sync: if a change materially alters this component (ports,
@@ -40,7 +40,7 @@ only. Registers the sibling stack services with TCP checks on
 `secret/consul/dev`; `.env` is generated from Vault via the `consul` AppRole.
 Production reference (same image): `../ansible/roles/consul` +
 `../terraform/modules/consul`. Full spec: the canonical note in the sca-docs
-vault ([infrastructure catalog](https://github.com/sca-node-template/sca-docs/blob/main/04-infrastructure/INDEX.md)).
+vault ([infrastructure catalog](https://github.com/sca-templates/sca-docs/blob/main/04-infrastructure/INDEX.md)).
 
 ## Layout
 

@@ -11,4 +11,4 @@
 ## Related
 
 - Component README: [../README.md](../README.md)
-- Vault note (canonical): [04-infrastructure/consul.md (sca-docs)](https://github.com/sca-node-template/sca-docs/blob/main/04-infrastructure/consul.md)
+- Vault note (canonical): [04-infrastructure/consul.md (sca-docs)](https://github.com/sca-templates/sca-docs/blob/main/04-infrastructure/consul.md)

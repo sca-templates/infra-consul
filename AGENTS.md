@@ -38,8 +38,7 @@ only. Registers the sibling stack services with TCP checks on
 `127.0.0.1:<port>` from the single catalog `scripts/services.txt`. Gossip key
 (`CONSUL_GOSSIP_KEY`, `consul keygen`) is stored in Vault
 `secret/consul/dev`; `.env` is generated from Vault via the `consul` AppRole.
-Production reference (same image): `../ansible/roles/consul` +
-`../terraform/modules/consul`. Full spec: the canonical note in the sca-docs
+Full spec: the canonical note in the sca-docs
 vault ([infrastructure catalog](https://github.com/sca-templates/sca-docs/blob/main/04-infrastructure/INDEX.md)).
 
 ## Layout
@@ -104,8 +103,4 @@ vault ([infrastructure catalog](https://github.com/sca-templates/sca-docs/blob/m
   `../vault/scripts/add-service.sh consul "" --read-policy secret/data/consul/*`,
   saves the creds to `.secrets/`, and writes a fresh `consul keygen` key to
   `secret/consul/dev` (`FORCE=1` rotates it).
-- Production mirror: `../ansible/roles/consul` + `../terraform/modules/consul`
-  — same image (`hashicorp/consul:1.19`) and `-bootstrap-expect=1`; the gossip
-  key comes from AWS Secrets Manager and the EC2 security group opens
-  8500/8600/8300/8301. Keep local flags in sync with production.
 - Content in English; changes land through a PR.

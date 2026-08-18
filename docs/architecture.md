@@ -112,9 +112,7 @@ entries:
 ## Production reference
 
 The same image (`hashicorp/consul:1.19`) and `-bootstrap-expect=1` run in
-production via `ansible/roles/consul/`, with the gossip key supplied by AWS
-Secrets Manager; `terraform/modules/consul/` provisions the EC2 instance and
-the security group that opens `8500`, `8600`, `8300`, `8301`. Keep local
+production; the gossip key is supplied by AWS Secrets Manager. Keep local
 flags in sync with production.
 
 ## Related

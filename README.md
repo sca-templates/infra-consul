@@ -5,8 +5,6 @@ Single-node [HashiCorp Consul](https://www.consul.io/) agent for the local
 the sibling stack services. API and UI on `http://127.0.0.1:8500`, DNS on
 `127.0.0.1:8600` (**loopback only**). Image `hashicorp/consul:1.19`, single
 server (`-bootstrap-expect=1`), no ACLs, gossip key managed by Vault.
-Production reference (same image): `../ansible/roles/consul` +
-`../terraform/modules/consul`.
 
 | Service | Image | Ports |
 | --- | --- | --- |
@@ -14,11 +12,11 @@ Production reference (same image): `../ansible/roles/consul` +
 
 Integrates with the sibling projects:
 
-- **Vault** (`../vault`) — source of `CONSUL_GOSSIP_KEY` (secret
+- **Vault** ([vault](https://github.com/sca-templates/vault)) — source of `CONSUL_GOSSIP_KEY` (secret
   `secret/consul/dev`, read via the `consul` AppRole).
-- **postgres-app** (`../postgres-app`), **redis** (`../redis`),
-  **kafka** / **kafka-connect** (`../kafka`), **vault** (`../vault`),
-  **prometheus** (`../prometheus`), **grafana** (`../grafana`) — registered
+- **postgres-app** ([postgres-app](https://github.com/sca-templates/postgres-app)), **redis** ([redis](https://github.com/sca-templates/redis)),
+  **kafka** / **kafka-connect** ([kafka](https://github.com/sca-templates/kafka)), **vault** ([vault](https://github.com/sca-templates/vault)),
+  **prometheus** ([prometheus](https://github.com/sca-templates/prometheus)), **grafana** ([grafana](https://github.com/sca-templates/grafana)) — registered
   services with TCP checks (see [Registered services](#registered-services)).
 
 ## Quick Start (local)
@@ -86,7 +84,7 @@ comments) — the **single source of truth** read by both
    `.env` (gitignored, `chmod 600`). Compose passes it through
    `env_file: .env` and `-encrypt=${CONSUL_GOSSIP_KEY}`.
 
-The same flow in production is Ansible + AWS Secrets Manager
+The gossip key is stored in AWS Secrets Manager
 (`{{ project }}/{{ environment }}/consul_gossip_key`); the image and
 `-bootstrap-expect=1` flags are identical.
 
@@ -132,14 +130,6 @@ dig @127.0.0.1 -p 8600 redis.service.consul +short       # -> 127.0.0.1
 | Agent unhealthy (`docker ps`) | `consul members` fails right after start | Wait for the `start_period` (15s); check `make logs` |
 | DNS doesn't answer | `:8600` blocked or agent not ready | `make ps`; ensure no other process binds 8600 |
 | `consul:1.19` pull errors | No registry access | Check internet access to Docker Hub |
-
-## Production reference
-
-- **Ansible**: `../../ansible/roles/consul/tasks/main.yml` +
-  `templates/docker-compose.yml.j2` (gossip key from AWS Secrets Manager, same
-  image and flags).
-- **Terraform**: `../../terraform/modules/consul/` (EC2 instance + security
-  group for `8500`, `8600`, `8300`, `8301`).
 
 ## Structure
 

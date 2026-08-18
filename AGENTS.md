@@ -1,7 +1,7 @@
 # Consul — Service Guide
 
-Single-node HashiCorp Consul agent (service discovery + TCP health checks)
-for the local `aws/` monorepo. Follow the sibling patterns exactly (`kafka/`,
+Single-node HashiCorp Consul agent (service discovery + TCP health checks).
+Follow the sibling patterns exactly (`kafka/`,
 `prometheus/`, `vault/`) — this repo is a copy-paste evolution of them.
 
 ## Ecosystem documentation (sca-docs)
@@ -100,7 +100,7 @@ vault ([infrastructure catalog](https://github.com/sca-templates/sca-docs/blob/m
   role_id/secret_id land in `.secrets/` (gitignored). Never commit `.env` or
   `.secrets/`.
 - `scripts/vault-secrets.sh` bootstraps the `consul` AppRole via
-  `../vault/scripts/add-service.sh consul "" --read-policy secret/data/consul/*`,
+  `vault/scripts/add-service.sh consul "" --read-policy secret/data/consul/*`,
   saves the creds to `.secrets/`, and writes a fresh `consul keygen` key to
   `secret/consul/dev` (`FORCE=1` rotates it).
 - Content in English; changes land through a PR.

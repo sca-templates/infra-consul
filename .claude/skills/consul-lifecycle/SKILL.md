@@ -28,6 +28,6 @@ description: Start, stop and troubleshoot the Consul agent. Use when the user as
 - Service missing from the catalog: run `make register`; a TCP check only
   turns green once the target publishes its port on `127.0.0.1`.
 - `make env` / `make vault-secrets` fail: Vault is not running/unsealed —
-  `cd ../vault && make up && make unseal`.
+  `cd vault && make up && make unseal`.
 - `make env` can't find the gossip key: run `make vault-secrets` first (the
   AppRole creds land in `.secrets/`, gitignored).

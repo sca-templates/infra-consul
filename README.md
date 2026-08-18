@@ -1,14 +1,13 @@
 # consul — HashiCorp Consul agent (service discovery + health checks)
 
-Single-node [HashiCorp Consul](https://www.consul.io/) agent for the local
-`aws/` monorepo, providing **service discovery** and **TCP health checks** for
-the sibling stack services. API and UI on `http://127.0.0.1:8500`, DNS on
+Single-node [HashiCorp Consul](https://www.consul.io/) agent providing
+**service discovery** and **TCP health checks** for the sibling stack services. API and UI on `http://127.0.0.1:8500`, DNS on
 `127.0.0.1:8600` (**loopback only**). Image `hashicorp/consul:1.19`, single
 server (`-bootstrap-expect=1`), no ACLs, gossip key managed by Vault.
 
-| Service | Image | Ports |
-| --- | --- | --- |
-| Consul (agent/server) | `hashicorp/consul:1.19` | `8500` API+UI, `8600` DNS, `8300` RPC, `8301` gossip |
+| Service | Image | Local (development) | Production |
+| --- | --- | --- | --- |
+| Consul (agent/server) | `hashicorp/consul:1.19` | `8500` API+UI, `8600` DNS, `8300` RPC, `8301` gossip | Same image; gossip key from AWS Secrets Manager |
 
 Integrates with the sibling projects:
 
@@ -23,10 +22,10 @@ Integrates with the sibling projects:
 
 ```bash
 # 1. Vault running and unsealed (once)
-cd ../vault && make up && make unseal
+cd vault && make up && make unseal
 
 # 2. All-in-one: Vault secrets + .env + up + register
-cd ../consul && make all
+cd consul && make all
 
 # 3. Verify
 make validate
@@ -75,7 +74,7 @@ comments) — the **single source of truth** read by both
 ## How the gossip key flows (local)
 
 1. `scripts/vault-secrets.sh` registers the `consul` AppRole in Vault (via
-   `../vault/scripts/add-service.sh`, read-only policy on
+   `vault/scripts/add-service.sh`, read-only policy on
    `secret/data/consul/*`) and saves the role_id/secret_id to `.secrets/`
    (gitignored).
 2. It generates `CONSUL_GOSSIP_KEY` with `consul keygen` and stores it in
@@ -99,6 +98,8 @@ The gossip key is stored in AWS Secrets Manager
   `127.0.0.1:8600` (see Usage examples).
 
 ## Usage examples
+
+> All examples below use `127.0.0.1` because services bind to loopback in development. In production, use the service's internal DNS name or load balancer endpoint.
 
 ```bash
 # Catalog (all registered services)
@@ -125,7 +126,7 @@ dig @127.0.0.1 -p 8600 redis.service.consul +short       # -> 127.0.0.1
 
 | Symptom | Probable cause | Fix |
 | --- | --- | --- |
-| `make env` / `make vault-secrets` fail | Vault is not running/unsealed | `cd ../vault && make up && make unseal` |
+| `make env` / `make vault-secrets` fail | Vault is not running/unsealed | `cd vault && make up && make unseal` |
 | `make validate` shows `Service missing: <svc>` | Service not registered or its port is not published | Start the sibling stack, then `make register`; the check recovers automatically |
 | Agent unhealthy (`docker ps`) | `consul members` fails right after start | Wait for the `start_period` (15s); check `make logs` |
 | DNS doesn't answer | `:8600` blocked or agent not ready | `make ps`; ensure no other process binds 8600 |
